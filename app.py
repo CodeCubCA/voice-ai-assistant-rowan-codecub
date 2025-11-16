@@ -2,6 +2,9 @@ import streamlit as st
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
+from audio_recorder_streamlit import audio_recorder
+import speech_recognition as sr
+import io
 
 # Load environment variables
 load_dotenv()
@@ -73,8 +76,47 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Chat input
-if prompt := st.chat_input("Type your message here..."):
+# Voice input section
+st.markdown("### 🎤 Voice Input")
+col1, col2 = st.columns([3, 1])
+
+with col1:
+    st.write("Click the microphone button to record your voice:")
+
+with col2:
+    audio_bytes = audio_recorder(
+        text="",
+        recording_color="#e74c3c",
+        neutral_color="#667eea",
+        icon_name="microphone",
+        icon_size="2x",
+    )
+
+# Process audio input
+prompt = None
+if audio_bytes:
+    try:
+        # Convert audio bytes to text using speech recognition
+        recognizer = sr.Recognizer()
+        audio_data = sr.AudioData(audio_bytes, sample_rate=16000, sample_width=2)
+
+        with st.spinner("Converting speech to text..."):
+            prompt = recognizer.recognize_google(audio_data)
+            st.success(f"You said: {prompt}")
+    except sr.UnknownValueError:
+        st.error("Could not understand audio. Please try again.")
+    except sr.RequestError as e:
+        st.error(f"Speech recognition error: {e}")
+    except Exception as e:
+        st.error(f"Error processing audio: {e}")
+
+# Text input (alternative to voice)
+st.markdown("### ⌨️ Text Input")
+if not prompt:
+    prompt = st.chat_input("Type your message here...")
+
+# Process the prompt (from either voice or text)
+if prompt:
     # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
 
