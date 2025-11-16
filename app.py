@@ -33,6 +33,12 @@ if "messages" not in st.session_state:
 if "personality" not in st.session_state:
     st.session_state.personality = "General Assistant"
 
+if "language" not in st.session_state:
+    st.session_state.language = "en-US"
+
+if "is_speaking" not in st.session_state:
+    st.session_state.is_speaking = False
+
 # Sidebar
 with st.sidebar:
     st.title("🤖 AI Chatbot Assistant")
@@ -63,7 +69,56 @@ with st.sidebar:
 
     st.markdown("---")
 
-    if st.button("Clear Chat History"):
+    # Language Selection
+    st.subheader("🌍 Language")
+    languages = {
+        "English (US)": "en-US",
+        "English (UK)": "en-GB",
+        "Spanish": "es-ES",
+        "French": "fr-FR",
+        "German": "de-DE",
+        "Chinese (Mandarin)": "zh-CN",
+        "Japanese": "ja-JP",
+        "Korean": "ko-KR",
+        "Portuguese": "pt-PT",
+        "Italian": "it-IT"
+    }
+
+    selected_language = st.selectbox(
+        "Voice Recognition Language:",
+        options=list(languages.keys()),
+        index=list(languages.values()).index(st.session_state.language)
+    )
+
+    new_language = languages[selected_language]
+    if new_language != st.session_state.language:
+        st.session_state.language = new_language
+        st.success(f"🌍 Language changed to {selected_language}")
+
+    st.markdown("---")
+
+    # Voice Commands Help
+    with st.expander("🎙️ Voice Commands", expanded=False):
+        st.markdown("""
+        **Available voice commands:**
+
+        🗑️ **Clear chat:**
+        - Say "clear chat" or "clear history"
+
+        🎭 **Change personality:**
+        - "Change personality to Study Buddy"
+        - "Switch to Gaming Helper"
+        - "Change to General Assistant"
+
+        💡 **Tips:**
+        - Speak clearly and naturally
+        - Commands work in any language
+        - Use the language selector above for better accuracy
+        """)
+
+    st.markdown("---")
+
+    if st.button("🗑️ Clear Chat History"):
         st.session_state.messages = []
         st.rerun()
 
@@ -76,12 +131,12 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Voice input section
-st.markdown("### 🎤 Voice Input")
-col1, col2 = st.columns([3, 1])
+# Visual activity indicator
+if st.session_state.is_speaking:
+    st.info("🎤 Processing your voice...")
 
-with col1:
-    st.write("Click the microphone button to record your voice:")
+# Chat input area with voice and text options
+col1, col2 = st.columns([5, 1])
 
 with col2:
     audio_bytes = audio_recorder(
@@ -90,11 +145,18 @@ with col2:
         neutral_color="#667eea",
         icon_name="microphone",
         icon_size="2x",
+        key="audio_recorder"
     )
+
+with col1:
+    text_prompt = st.chat_input("Type your message or use the microphone...")
 
 # Process audio input
 prompt = None
 if audio_bytes:
+    # Set speaking state
+    st.session_state.is_speaking = True
+
     try:
         # The audio_recorder returns WebM audio, we need to save it directly
         import tempfile
@@ -134,9 +196,32 @@ if audio_bytes:
                 # Clean up WAV file
                 os.unlink(wav_path)
 
-            with st.spinner("Converting speech to text..."):
-                prompt = recognizer.recognize_google(audio_data)
+            with st.spinner("🎤 Converting speech to text..."):
+                # Use selected language for recognition
+                prompt = recognizer.recognize_google(audio_data, language=st.session_state.language)
                 st.success(f"✅ You said: **{prompt}**")
+
+                # Check for voice commands
+                prompt_lower = prompt.lower()
+
+                # Clear chat command
+                if "clear chat" in prompt_lower or "clear history" in prompt_lower:
+                    st.session_state.messages = []
+                    st.session_state.is_speaking = False
+                    st.success("🗑️ Chat history cleared by voice command!")
+                    st.rerun()
+
+                # Personality change commands
+                for personality in PERSONALITIES.keys():
+                    personality_lower = personality.lower()
+                    if (f"change personality to {personality_lower}" in prompt_lower or
+                        f"switch to {personality_lower}" in prompt_lower or
+                        f"change to {personality_lower}" in prompt_lower):
+                        st.session_state.personality = personality
+                        st.session_state.messages = []
+                        st.session_state.is_speaking = False
+                        st.success(f"🎭 Switched to {personality} by voice command!")
+                        st.rerun()
 
         finally:
             # Clean up temp file
@@ -145,16 +230,21 @@ if audio_bytes:
                 os.unlink(tmp_file_path)
 
     except sr.UnknownValueError:
+        st.session_state.is_speaking = False
         st.error("❌ Could not understand audio. Please speak clearly and try again.")
     except sr.RequestError as e:
+        st.session_state.is_speaking = False
         st.error(f"❌ Speech recognition service error: {e}")
     except Exception as e:
+        st.session_state.is_speaking = False
         st.error(f"❌ Error processing audio: {str(e)}")
+else:
+    # Reset speaking state when no audio
+    st.session_state.is_speaking = False
 
-# Text input (alternative to voice)
-st.markdown("### ⌨️ Text Input")
-if not prompt:
-    prompt = st.chat_input("Type your message here...")
+# Use text input if no voice input
+if not prompt and text_prompt:
+    prompt = text_prompt
 
 # Process the prompt (from either voice or text)
 if prompt:
