@@ -39,6 +39,9 @@ if "language" not in st.session_state:
 if "is_speaking" not in st.session_state:
     st.session_state.is_speaking = False
 
+if "last_audio_bytes" not in st.session_state:
+    st.session_state.last_audio_bytes = None
+
 # Sidebar
 with st.sidebar:
     st.title("🤖 AI Chatbot Assistant")
@@ -153,7 +156,10 @@ with col1:
 
 # Process audio input
 prompt = None
-if audio_bytes:
+if audio_bytes and audio_bytes != st.session_state.last_audio_bytes:
+    # Store this audio to prevent reprocessing
+    st.session_state.last_audio_bytes = audio_bytes
+
     # Set speaking state
     st.session_state.is_speaking = True
 
