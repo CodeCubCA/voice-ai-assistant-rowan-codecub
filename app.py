@@ -223,6 +223,9 @@ if audio_bytes:
                         st.success(f"🎭 Switched to {personality} by voice command!")
                         st.rerun()
 
+                # Clear speaking state for normal messages after processing
+                st.session_state.is_speaking = False
+
         finally:
             # Clean up temp file
             import os
