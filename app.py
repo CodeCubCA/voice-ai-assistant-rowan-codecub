@@ -96,19 +96,60 @@ with col2:
 prompt = None
 if audio_bytes:
     try:
-        # Convert audio bytes to text using speech recognition
-        recognizer = sr.Recognizer()
-        audio_data = sr.AudioData(audio_bytes, sample_rate=16000, sample_width=2)
+        # The audio_recorder returns WebM audio, we need to save it directly
+        import tempfile
 
-        with st.spinner("Converting speech to text..."):
-            prompt = recognizer.recognize_google(audio_data)
-            st.success(f"You said: {prompt}")
+        # Save audio bytes to temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp_file:
+            tmp_file.write(audio_bytes)
+            tmp_file_path = tmp_file.name
+
+        # Convert to WAV using pydub if needed, or try direct recognition
+        try:
+            # Try to use speech recognition directly on the audio
+            recognizer = sr.Recognizer()
+
+            # Try to load as WAV first
+            try:
+                with sr.AudioFile(tmp_file_path) as source:
+                    # Adjust for ambient noise
+                    recognizer.adjust_for_ambient_noise(source, duration=0.5)
+                    audio_data = recognizer.record(source)
+            except:
+                # If that fails, the audio is likely WebM format
+                # We need to convert it to WAV first
+                from pydub import AudioSegment
+                import os
+
+                # Load WebM and convert to WAV
+                audio = AudioSegment.from_file(tmp_file_path, format="webm")
+                wav_path = tmp_file_path.replace(".webm", ".wav")
+                audio.export(wav_path, format="wav")
+
+                # Now use the WAV file
+                with sr.AudioFile(wav_path) as source:
+                    recognizer.adjust_for_ambient_noise(source, duration=0.5)
+                    audio_data = recognizer.record(source)
+
+                # Clean up WAV file
+                os.unlink(wav_path)
+
+            with st.spinner("Converting speech to text..."):
+                prompt = recognizer.recognize_google(audio_data)
+                st.success(f"✅ You said: **{prompt}**")
+
+        finally:
+            # Clean up temp file
+            import os
+            if os.path.exists(tmp_file_path):
+                os.unlink(tmp_file_path)
+
     except sr.UnknownValueError:
-        st.error("Could not understand audio. Please try again.")
+        st.error("❌ Could not understand audio. Please speak clearly and try again.")
     except sr.RequestError as e:
-        st.error(f"Speech recognition error: {e}")
+        st.error(f"❌ Speech recognition service error: {e}")
     except Exception as e:
-        st.error(f"Error processing audio: {e}")
+        st.error(f"❌ Error processing audio: {str(e)}")
 
 # Text input (alternative to voice)
 st.markdown("### ⌨️ Text Input")

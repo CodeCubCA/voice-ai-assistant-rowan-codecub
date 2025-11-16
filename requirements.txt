@@ -4,3 +4,4 @@ python-dotenv>=1.0.0
 audio-recorder-streamlit>=0.0.8
 SpeechRecognition>=3.10.0
 PyAudio>=0.2.13
+pydub>=0.25.1
