@@ -245,6 +245,8 @@ else:
 # Use text input if no voice input
 if not prompt and text_prompt:
     prompt = text_prompt
+    # Reset speaking state when using text input
+    st.session_state.is_speaking = False
 
 # Process the prompt (from either voice or text)
 if prompt:
