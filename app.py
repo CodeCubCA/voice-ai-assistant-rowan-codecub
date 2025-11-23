@@ -108,8 +108,26 @@ def generate_tts_audio(text, message_index, show_feedback=True):
         tts_text = tts_text[:1000] + "..." if len(tts_text) > 1000 else tts_text
 
         try:
-            # Create TTS object with US English
-            tts = gTTS(text=tts_text, lang='en', tld='us', slow=False)
+            # Convert language code from recognition format to TTS format
+            # Map speech recognition codes (en-US, es-ES) to gTTS codes (en, es)
+            lang_map = {
+                "en-US": "en",
+                "en-GB": "en",
+                "es-ES": "es",
+                "fr-FR": "fr",
+                "de-DE": "de",
+                "zh-CN": "zh-CN",
+                "ja-JP": "ja",
+                "ko-KR": "ko",
+                "pt-PT": "pt",
+                "it-IT": "it"
+            }
+
+            # Get TTS language code from current session language
+            tts_lang = lang_map.get(st.session_state.language, "en")
+
+            # Create TTS object with selected language
+            tts = gTTS(text=tts_text, lang=tts_lang, slow=False)
 
             # Save to bytes buffer
             audio_buffer = io.BytesIO()
@@ -175,10 +193,10 @@ with st.sidebar:
         }
 
         selected_language = st.selectbox(
-            "Voice recognition language:",
+            "Voice language:",
             options=list(languages.keys()),
             index=list(languages.values()).index(st.session_state.language),
-            help="Select language for voice input recognition"
+            help="Select language for both voice input and audio output"
         )
 
         new_language = languages[selected_language]
