@@ -97,12 +97,19 @@ def generate_tts_audio(text, message_index, show_feedback=True):
         if len(text) > 500 and show_feedback:
             st.warning("⏳ Long message - audio generation may take a moment...")
 
+        # Clean and prepare text for TTS
+        # Remove markdown formatting and special characters that might cause issues
+        import re
+        tts_text = text.replace("**", "").replace("*", "").replace("_", "")
+        tts_text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', tts_text)  # Remove markdown links
+        tts_text = re.sub(r'`([^`]+)`', r'\1', tts_text)  # Remove code formatting
+
         # Truncate extremely long messages for TTS
-        tts_text = text[:1000] + "..." if len(text) > 1000 else text
+        tts_text = tts_text[:1000] + "..." if len(tts_text) > 1000 else tts_text
 
         try:
-            # Create TTS object
-            tts = gTTS(text=tts_text, lang='en', slow=False)
+            # Create TTS object with US English
+            tts = gTTS(text=tts_text, lang='en', tld='us', slow=False)
 
             # Save to bytes buffer
             audio_buffer = io.BytesIO()
