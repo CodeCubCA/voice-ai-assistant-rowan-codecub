@@ -27,7 +27,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# Custom CSS to fix input at bottom
+# Custom CSS for improved UI
 st.markdown("""
 <style>
     /* Fix the chat input at the bottom */
@@ -44,12 +44,25 @@ st.markdown("""
 
     /* Add padding to main content to prevent overlap */
     .main .block-container {
-        padding-bottom: 100px;
+        padding-bottom: 120px;
     }
 
     /* Ensure chat messages scroll properly */
     section[data-testid="stChatMessageContainer"] {
         margin-bottom: 100px;
+    }
+
+    /* Make audio players full-width on mobile */
+    @media (max-width: 768px) {
+        .stAudio {
+            width: 100% !important;
+        }
+    }
+
+    /* Improve spacing for audio sections */
+    .stAudio {
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -77,12 +90,19 @@ if "processing" not in st.session_state:
     st.session_state.processing = False
 
 # TTS audio generation function
-def generate_tts_audio(text, message_index):
+def generate_tts_audio(text, message_index, show_feedback=True):
     """Generate TTS audio for a message and store it in session state"""
     if message_index not in st.session_state.tts_audio:
+        # Warn for very long messages
+        if len(text) > 500 and show_feedback:
+            st.warning("⏳ Long message - audio generation may take a moment...")
+
+        # Truncate extremely long messages for TTS
+        tts_text = text[:1000] + "..." if len(text) > 1000 else text
+
         try:
             # Create TTS object
-            tts = gTTS(text=text, lang='en', slow=False)
+            tts = gTTS(text=tts_text, lang='en', slow=False)
 
             # Save to bytes buffer
             audio_buffer = io.BytesIO()
@@ -91,8 +111,11 @@ def generate_tts_audio(text, message_index):
 
             # Store in session state
             st.session_state.tts_audio[message_index] = audio_buffer.read()
+
+            return st.session_state.tts_audio[message_index]
         except Exception as e:
-            st.error(f"TTS Error: {str(e)}")
+            if show_feedback:
+                st.error(f"❌ Audio generation failed: {str(e)}")
             return None
 
     return st.session_state.tts_audio.get(message_index)
@@ -102,16 +125,20 @@ with st.sidebar:
     st.title("🤖 AI Chatbot Assistant")
     st.markdown("---")
 
-    st.subheader("About")
-    st.write("This is an AI-powered chatbot using Google Gemini API. Choose a personality and start chatting!")
+    # About section in expander
+    with st.expander("ℹ️ About", expanded=False):
+        st.write("AI-powered chatbot using Google Gemini API with voice input/output capabilities.")
+        st.write("**Features:** Voice chat, TTS audio, multiple personalities, and multi-language support.")
 
     st.markdown("---")
 
-    st.subheader("Choose Personality")
+    # Personality Selection
+    st.subheader("🎭 Personality")
     selected_personality = st.selectbox(
-        "Select AI Personality:",
+        "Choose AI personality:",
         options=list(PERSONALITIES.keys()),
-        index=list(PERSONALITIES.keys()).index(st.session_state.personality)
+        index=list(PERSONALITIES.keys()).index(st.session_state.personality),
+        help="Select how the AI should respond to you"
     )
 
     # Update personality if changed
@@ -120,40 +147,37 @@ with st.sidebar:
         st.session_state.messages = []  # Clear chat history when personality changes
         st.rerun()
 
-    st.markdown("---")
-
-    st.subheader("Current Personality")
-    st.info(f"**{st.session_state.personality}**")
+    st.info(f"**Active:** {st.session_state.personality}")
 
     st.markdown("---")
 
-    # Language Selection
-    st.subheader("🌍 Language")
-    languages = {
-        "English (US)": "en-US",
-        "English (UK)": "en-GB",
-        "Spanish": "es-ES",
-        "French": "fr-FR",
-        "German": "de-DE",
-        "Chinese (Mandarin)": "zh-CN",
-        "Japanese": "ja-JP",
-        "Korean": "ko-KR",
-        "Portuguese": "pt-PT",
-        "Italian": "it-IT"
-    }
+    # Voice Settings in expander
+    with st.expander("🎤 Voice Settings", expanded=False):
+        st.subheader("🌍 Language")
+        languages = {
+            "English (US)": "en-US",
+            "English (UK)": "en-GB",
+            "Spanish": "es-ES",
+            "French": "fr-FR",
+            "German": "de-DE",
+            "Chinese (Mandarin)": "zh-CN",
+            "Japanese": "ja-JP",
+            "Korean": "ko-KR",
+            "Portuguese": "pt-PT",
+            "Italian": "it-IT"
+        }
 
-    selected_language = st.selectbox(
-        "Voice Recognition Language:",
-        options=list(languages.keys()),
-        index=list(languages.values()).index(st.session_state.language)
-    )
+        selected_language = st.selectbox(
+            "Voice recognition language:",
+            options=list(languages.keys()),
+            index=list(languages.values()).index(st.session_state.language),
+            help="Select language for voice input recognition"
+        )
 
-    new_language = languages[selected_language]
-    if new_language != st.session_state.language:
-        st.session_state.language = new_language
-        st.success(f"🌍 Language changed to {selected_language}")
-
-    st.markdown("---")
+        new_language = languages[selected_language]
+        if new_language != st.session_state.language:
+            st.session_state.language = new_language
+            st.success(f"🌍 Changed to {selected_language}")
 
     # Voice Commands Help
     with st.expander("🎙️ Voice Commands", expanded=False):
@@ -161,7 +185,7 @@ with st.sidebar:
         **Available voice commands:**
 
         🗑️ **Clear chat:**
-        - Say "clear chat" or "clear history"
+        - "clear chat" or "clear history"
 
         🎭 **Change personality:**
         - "Change personality to Study Buddy"
@@ -171,18 +195,30 @@ with st.sidebar:
         💡 **Tips:**
         - Speak clearly and naturally
         - Commands work in any language
-        - Use the language selector above for better accuracy
+        - Use voice settings for better accuracy
         """)
 
     st.markdown("---")
 
-    if st.button("🗑️ Clear Chat History"):
+    if st.button("🗑️ Clear Chat History", help="Remove all messages and start fresh"):
         st.session_state.messages = []
+        st.session_state.tts_audio = {}  # Clear audio cache
         st.rerun()
 
 # Main chat interface
 st.title("💬 Chat with AI")
 st.caption(f"Currently chatting with: **{st.session_state.personality}**")
+
+# Show helpful tips if no messages yet
+if len(st.session_state.messages) == 0:
+    st.info("""
+    👋 **Welcome! Here's how to use the voice chat:**
+    - 🎤 **Voice Input**: Click the microphone button to speak
+    - ⌨️ **Text Input**: Type your message in the text box
+    - 🔊 **Audio Output**: Listen to AI responses with built-in audio players
+    - 🎭 **Personalities**: Change AI personality from the sidebar
+    - 🌍 **Languages**: Voice recognition supports 10+ languages
+    """)
 
 # Display chat messages with TTS audio players
 for idx, message in enumerate(st.session_state.messages):
@@ -191,9 +227,19 @@ for idx, message in enumerate(st.session_state.messages):
 
     # Add audio player for assistant messages (outside chat_message)
     if message["role"] == "assistant":
-        audio_data = generate_tts_audio(message["content"], idx)
+        audio_data = generate_tts_audio(message["content"], idx, show_feedback=False)
         if audio_data:
-            st.audio(audio_data, format='audio/mp3')
+            # Add visual separator
+            st.markdown("---")
+
+            # Use columns for better layout
+            col_audio, col_spacer = st.columns([5, 1])
+            with col_audio:
+                st.markdown("🔊 **Listen to response:**")
+                st.audio(audio_data, format='audio/mp3')
+
+            # Add spacing after audio
+            st.markdown("")
 
 # Visual activity indicator
 if st.session_state.is_speaking:
@@ -368,9 +414,10 @@ if prompt and not st.session_state.processing:
             # Add assistant response to chat history
             st.session_state.messages.append({"role": "assistant", "content": full_response})
 
-            # Generate TTS audio for the new response
+            # Generate TTS audio for the new response with visual feedback
             message_index = len(st.session_state.messages) - 1
-            generate_tts_audio(full_response, message_index)
+            with st.spinner("🎵 Generating audio..."):
+                generate_tts_audio(full_response, message_index)
 
             # Clear processing flag and rerun to display audio player
             st.session_state.processing = False
