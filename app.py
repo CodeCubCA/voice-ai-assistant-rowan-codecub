@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from audio_recorder_streamlit import audio_recorder
 import speech_recognition as sr
 import io
+from gtts import gTTS
 
 # Load environment variables
 load_dotenv()
@@ -26,6 +27,33 @@ st.set_page_config(
     layout="centered"
 )
 
+# Custom CSS to fix input at bottom
+st.markdown("""
+<style>
+    /* Fix the chat input at the bottom */
+    .stChatFloatingInputContainer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: #0e1117;
+        padding: 1rem;
+        z-index: 999;
+        border-top: 1px solid #262730;
+    }
+
+    /* Add padding to main content to prevent overlap */
+    .main .block-container {
+        padding-bottom: 100px;
+    }
+
+    /* Ensure chat messages scroll properly */
+    section[data-testid="stChatMessageContainer"] {
+        margin-bottom: 100px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # Initialize session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -41,6 +69,33 @@ if "is_speaking" not in st.session_state:
 
 if "last_audio_bytes" not in st.session_state:
     st.session_state.last_audio_bytes = None
+
+if "tts_audio" not in st.session_state:
+    st.session_state.tts_audio = {}
+
+if "processing" not in st.session_state:
+    st.session_state.processing = False
+
+# TTS audio generation function
+def generate_tts_audio(text, message_index):
+    """Generate TTS audio for a message and store it in session state"""
+    if message_index not in st.session_state.tts_audio:
+        try:
+            # Create TTS object
+            tts = gTTS(text=text, lang='en', slow=False)
+
+            # Save to bytes buffer
+            audio_buffer = io.BytesIO()
+            tts.write_to_fp(audio_buffer)
+            audio_buffer.seek(0)
+
+            # Store in session state
+            st.session_state.tts_audio[message_index] = audio_buffer.read()
+        except Exception as e:
+            st.error(f"TTS Error: {str(e)}")
+            return None
+
+    return st.session_state.tts_audio.get(message_index)
 
 # Sidebar
 with st.sidebar:
@@ -129,10 +184,16 @@ with st.sidebar:
 st.title("💬 Chat with AI")
 st.caption(f"Currently chatting with: **{st.session_state.personality}**")
 
-# Display chat messages
-for message in st.session_state.messages:
+# Display chat messages with TTS audio players
+for idx, message in enumerate(st.session_state.messages):
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
+
+    # Add audio player for assistant messages (outside chat_message)
+    if message["role"] == "assistant":
+        audio_data = generate_tts_audio(message["content"], idx)
+        if audio_data:
+            st.audio(audio_data, format='audio/mp3')
 
 # Visual activity indicator
 if st.session_state.is_speaking:
@@ -258,7 +319,10 @@ if not prompt and text_prompt:
     st.session_state.is_speaking = False
 
 # Process the prompt (from either voice or text)
-if prompt:
+if prompt and not st.session_state.processing:
+    # Set processing flag to prevent duplicate processing
+    st.session_state.processing = True
+
     # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
 
@@ -304,10 +368,19 @@ if prompt:
             # Add assistant response to chat history
             st.session_state.messages.append({"role": "assistant", "content": full_response})
 
+            # Generate TTS audio for the new response
+            message_index = len(st.session_state.messages) - 1
+            generate_tts_audio(full_response, message_index)
+
+            # Clear processing flag and rerun to display audio player
+            st.session_state.processing = False
+            st.rerun()
+
         except Exception as e:
             error_message = f"Error: {str(e)}"
             message_placeholder.error(error_message)
             st.session_state.messages.append({"role": "assistant", "content": error_message})
+            st.session_state.processing = False
 
 # Footer
 st.markdown("---")

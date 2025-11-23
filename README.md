@@ -7,11 +7,12 @@ An AI-powered chatbot application using Streamlit and Google Gemini API.
 - 💬 **Interactive Chat Interface** - Beautiful Streamlit-based UI with message history
 - 🎭 **Multiple Personalities** - Choose between General Assistant, Study Buddy, or Gaming Helper
 - 🎤 **Voice Input** - Record your voice and have it converted to text automatically
+- 🔊 **Text-to-Speech Output** - AI responses are automatically converted to audio with built-in audio players
 - 🌍 **Multi-Language Support** - Voice recognition in 10+ languages (English, Spanish, French, German, Chinese, Japanese, Korean, Portuguese, Italian, and more)
 - 🎯 **Voice Commands** - Control the app with voice commands like "clear chat" or "change personality to Study Buddy"
 - 🔄 **Streaming Responses** - Real-time response display for better user experience
 - 💾 **Conversation History** - Maintains context throughout the conversation
-- 🎨 **Modern UI** - Clean and intuitive design with visual activity indicators
+- 🎨 **Modern UI** - Clean and intuitive design with visual activity indicators and fixed bottom input
 
 ## Requirements
 
