@@ -1,18 +1,57 @@
 # Voice AI Assistant
 
-An AI-powered chatbot application using Streamlit and Google Gemini API.
+An intelligent AI chatbot with voice input and output capabilities, powered by Google Gemini and built with Streamlit. Experience natural conversations with AI through text or voice, with support for multiple languages and customizable AI personalities.
 
 ## Features
 
-- 💬 **Interactive Chat Interface** - Beautiful Streamlit-based UI with message history
-- 🎭 **Multiple Personalities** - Choose between General Assistant, Study Buddy, or Gaming Helper
-- 🎤 **Voice Input** - Record your voice and have it converted to text automatically
-- 🔊 **Text-to-Speech Output** - AI responses are automatically converted to audio with built-in audio players
-- 🌍 **Multi-Language Support** - Voice recognition in 10+ languages (English, Spanish, French, German, Chinese, Japanese, Korean, Portuguese, Italian, and more)
-- 🎯 **Voice Commands** - Control the app with voice commands like "clear chat" or "change personality to Study Buddy"
+### Core Functionality
+- 💬 **Interactive Chat Interface** - Beautiful Streamlit-based UI with persistent message history
+- 🤖 **Google Gemini AI** - Powered by Gemini 2.0 Flash for intelligent, context-aware responses
 - 🔄 **Streaming Responses** - Real-time response display for better user experience
-- 💾 **Conversation History** - Maintains context throughout the conversation
-- 🎨 **Modern UI** - Clean and intuitive design with visual activity indicators and fixed bottom input
+
+### Voice Capabilities
+- 🎤 **Voice Input** - Record your voice and have it converted to text automatically using Google Speech Recognition
+- 🔊 **Text-to-Speech Output** - AI responses are automatically converted to audio using Google TTS (gtts)
+- 🌍 **Multi-Language Support** - Voice recognition and TTS in 10+ languages:
+  - English (US & UK)
+  - Spanish
+  - French
+  - German
+  - Chinese (Mandarin)
+  - Japanese
+  - Korean
+  - Portuguese
+  - Italian
+
+### Advanced Features
+- 🎭 **Multiple AI Personalities** - Choose between:
+  - **General Assistant**: Helpful and knowledgeable for everyday tasks
+  - **Study Buddy**: Patient and encouraging for learning and homework
+  - **Gaming Helper**: Enthusiastic gaming expert for tips and strategies
+- 🎯 **Voice Commands** - Control the app hands-free:
+  - "Clear chat" or "Clear history" - Reset the conversation
+  - "Change personality to Study Buddy" - Switch AI personalities
+  - "Switch to Gaming Helper" - Change conversation style
+- 🎨 **Modern UI** - Clean design with:
+  - Visual activity indicators (🟢 Ready / 🔴 Listening)
+  - Fixed bottom input for easy access
+  - Mobile-responsive audio players
+  - Organized sidebar with collapsible sections
+- 💾 **Conversation Context** - Maintains full conversation history throughout the session
+
+## Technologies Used
+
+| Technology | Purpose |
+|------------|---------|
+| **Python 3.9+** | Core programming language |
+| **Streamlit** | Web framework for the user interface |
+| **Google Gemini API** | AI conversation model (gemini-2.0-flash) |
+| **Google Speech Recognition** | Voice-to-text conversion |
+| **Google Text-to-Speech (gtts)** | Text-to-audio conversion |
+| **audio-recorder-streamlit** | Browser-based audio recording |
+| **PyAudio** | Audio processing |
+| **pydub** | Audio format conversion (WebM to WAV) |
+| **python-dotenv** | Environment variable management |
 
 ## Requirements
 
@@ -26,92 +65,198 @@ The Google Gemini AI SDK (`google-generativeai`) is only compatible with Python 
 python --version
 ```
 
-If you have Python 3.6 or lower, you'll need to upgrade Python to use this application.
+If you have Python 3.8 or lower, you'll need to upgrade Python to use this application.
 
-## Installation
+### Dependencies
 
-1. **Upgrade Python** (if needed)
-   - Download Python 3.11+ from [python.org](https://www.python.org/downloads/)
+All required packages are listed in `requirements.txt`:
 
-2. **Install Dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+```
+streamlit>=1.50.0
+google-generativeai>=0.3.0
+python-dotenv>=1.0.0
+audio-recorder-streamlit>=0.0.8
+SpeechRecognition>=3.10.0
+PyAudio>=0.2.13
+pydub>=0.25.1
+gtts>=2.3.0
+```
 
-3. **Set Up API Key**
-   - Your Gemini API key is already configured in the `.env` file
-   - If you need to change it, edit the `.env` file
+## Setup Instructions
+
+### 1. Clone or Download the Repository
+
+If you're using GitHub Classroom, clone your repository:
+
+```bash
+git clone <your-repository-url>
+cd voice-ai-assistant
+```
+
+### 2. Install Python (if needed)
+
+Download and install Python 3.9 or higher from [python.org](https://www.python.org/downloads/)
+
+### 3. Create a Virtual Environment (Recommended)
+
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate it
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+```
+
+### 4. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 5. Set Up Your API Key
+
+1. Get a free Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Create a `.env` file in the project directory (use `.env.example` as a template):
+
+```bash
+# Copy the example file
+cp .env.example .env
+```
+
+3. Edit the `.env` file and add your API key:
+
+```
+GEMINI_API_KEY=your_actual_api_key_here
+```
+
+**Important:** Never commit your `.env` file to version control. It's already included in `.gitignore`.
 
 ## Usage
 
-Run the application:
+### Running the Application
+
+Start the Streamlit server:
 
 ```bash
 streamlit run app.py
 ```
 
-The app will open in your default web browser at `http://localhost:8501`
+The app will automatically open in your default web browser at `http://localhost:8501`
 
-### Using Voice Input
+### Using the Chat Interface
 
+#### Text Input
+- Type your message in the chat input box at the bottom
+- Press Enter to send
+
+#### Voice Input
 1. Click the microphone button next to the chat input
 2. Speak your message clearly
-3. The app will automatically convert your speech to text
-4. Select your preferred language from the sidebar for better accuracy
+3. Wait for the speech recognition to process
+4. Your message will be automatically sent to the AI
+
+#### Listening to Responses
+- Every AI response includes an audio player
+- Click play to hear the response read aloud
+- Audio is generated in the selected language
+
+### Changing Settings
+
+#### Select a Language
+1. Open the sidebar (click the arrow in the top-left)
+2. Expand "🎤 Voice Settings"
+3. Choose your preferred language from the dropdown
+4. Both voice input and audio output will use this language
+
+#### Change AI Personality
+1. Open the sidebar
+2. Under "🎭 Personality", select from:
+   - **General Assistant**: For general questions and tasks
+   - **Study Buddy**: For learning and educational help
+   - **Gaming Helper**: For gaming tips and discussions
+3. Chat history will be cleared when you switch personalities
 
 ### Voice Commands
 
-You can control the app using voice commands:
+Control the app hands-free with these voice commands:
 
-- **Clear chat**: Say "clear chat" or "clear history" to reset the conversation
-- **Change personality**: Say "change personality to Study Buddy", "switch to Gaming Helper", or "change to General Assistant"
+| Command | Action |
+|---------|--------|
+| "Clear chat" | Clears conversation history |
+| "Clear history" | Clears conversation history |
+| "Change personality to Study Buddy" | Switches to Study Buddy personality |
+| "Switch to Gaming Helper" | Switches to Gaming Helper personality |
+| "Change to General Assistant" | Switches to General Assistant personality |
 
-These commands work in any supported language!
+**Note:** Voice commands work in any supported language!
 
-## Personalities
+### Visual Indicators
 
-### General Assistant
-A helpful, friendly, and knowledgeable AI assistant that provides clear and accurate responses.
-
-### Study Buddy
-An enthusiastic study partner that helps with understanding concepts, homework, and exam preparation.
-
-### Gaming Helper
-A passionate gaming expert who knows about games, strategies, tips, tricks, and gaming culture.
-
-## Technology Stack
-
-- **Frontend:** Streamlit
-- **AI Model:** Google Gemini 2.0 Flash
-- **Language:** Python 3.9+
-- **Environment:** python-dotenv for configuration
+- 🟢 **Green Circle**: App is ready and waiting for input
+- 🔴 **Red Circle**: App is listening or processing your voice input
 
 ## Project Structure
 
 ```
 voice-ai-assistant/
-├── app.py                 # Main application file
-├── requirements.txt       # Python dependencies
-├── .env                   # API key configuration (not tracked in git)
-├── .env.example          # Template for API key
-├── .gitignore            # Git ignore rules
-└── README.md             # This file
+├── app.py                 # Main application file with all functionality
+├── requirements.txt       # Python package dependencies
+├── .env                   # API key configuration (NOT tracked in git)
+├── .env.example          # Template for environment variables
+├── .gitignore            # Git ignore rules (protects .env)
+└── README.md             # This documentation file
 ```
 
 ## Troubleshooting
 
+### Installation Issues
+
 **Error: No matching distribution found for google-generativeai**
-- This means your Python version is too old (below 3.9)
-- Solution: Upgrade to Python 3.9 or higher
+- **Cause**: Python version is too old (below 3.9)
+- **Solution**: Upgrade to Python 3.9 or higher from [python.org](https://www.python.org/downloads/)
+
+**Error: Failed building wheel for PyAudio**
+- **On Windows**: Download the appropriate `.whl` file from [here](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio)
+- **On macOS**: Run `brew install portaudio` then `pip install pyaudio`
+- **On Linux**: Run `sudo apt-get install portaudio19-dev` then `pip install pyaudio`
+
+### Runtime Issues
 
 **Error: GEMINI_API_KEY not found**
-- Make sure the `.env` file exists in the project directory
+- Make sure the `.env` file exists in the project root directory
 - Verify the API key is correctly set in the `.env` file
+- Check that the key format matches: `GEMINI_API_KEY=your_key_here`
+
+**Voice input not working**
+- Ensure your browser has microphone permissions enabled
+- Check that your microphone is properly connected and working
+- Try refreshing the browser page
+
+**Speech recognition errors**
+- Speak clearly and avoid background noise
+- Ensure you have an active internet connection (Google Speech Recognition requires internet)
+- Try selecting a different language in Voice Settings
+
+**Audio not playing**
+- Check your browser's audio settings
+- Ensure audio is not muted
+- Try a different browser (Chrome and Firefox work best)
+
+**TTS audio in wrong language**
+- Make sure you've selected the correct language in "🎤 Voice Settings"
+- The TTS language automatically matches your voice input language setting
 
 ## License
 
-This project is for educational purposes.
+This project is for educational purposes as part of a GitHub Classroom assignment.
 
 ## Author
 
 Created as a GitHub Classroom assignment project.
+
+---
+
+**Powered by Google Gemini API**
