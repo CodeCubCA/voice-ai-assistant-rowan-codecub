@@ -266,9 +266,19 @@ for idx, message in enumerate(st.session_state.messages):
             # Add spacing after audio
             st.markdown("")
 
-# Visual activity indicator
-if st.session_state.is_speaking:
-    st.info("🎤 Processing your voice...")
+# Visual status indicator
+status_col1, status_col2 = st.columns([1, 5])
+with status_col1:
+    if st.session_state.is_speaking:
+        st.markdown("### 🟢")
+    else:
+        st.markdown("### 🔴")
+
+with status_col2:
+    if st.session_state.is_speaking:
+        st.info("🎤 Processing your voice...")
+    else:
+        st.success("✅ Ready - Click microphone to speak")
 
 # Chat input area with voice and text options
 col1, col2 = st.columns([5, 1])
