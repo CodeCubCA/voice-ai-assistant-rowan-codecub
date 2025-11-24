@@ -270,13 +270,13 @@ for idx, message in enumerate(st.session_state.messages):
 status_col1, status_col2 = st.columns([1, 5])
 with status_col1:
     if st.session_state.is_speaking:
-        st.markdown("### 🟢")
-    else:
         st.markdown("### 🔴")
+    else:
+        st.markdown("### 🟢")
 
 with status_col2:
     if st.session_state.is_speaking:
-        st.info("🎤 Processing your voice...")
+        st.warning("🎤 Listening / Processing...")
     else:
         st.success("✅ Ready - Click microphone to speak")
 
