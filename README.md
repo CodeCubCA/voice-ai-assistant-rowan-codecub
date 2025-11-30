@@ -49,8 +49,6 @@ An intelligent AI chatbot with voice input and output capabilities, powered by G
 | **Google Speech Recognition** | Voice-to-text conversion |
 | **Google Text-to-Speech (gtts)** | Text-to-audio conversion |
 | **audio-recorder-streamlit** | Browser-based audio recording |
-| **PyAudio** | Audio processing |
-| **pydub** | Audio format conversion (WebM to WAV) |
 | **python-dotenv** | Environment variable management |
 
 ## Requirements
@@ -77,8 +75,6 @@ google-generativeai>=0.3.0
 python-dotenv>=1.0.0
 audio-recorder-streamlit>=0.0.8
 SpeechRecognition>=3.10.0
-PyAudio>=0.2.13
-pydub>=0.25.1
 gtts>=2.3.0
 ```
 
@@ -218,10 +214,6 @@ voice-ai-assistant/
 - **Cause**: Python version is too old (below 3.9)
 - **Solution**: Upgrade to Python 3.9 or higher from [python.org](https://www.python.org/downloads/)
 
-**Error: Failed building wheel for PyAudio**
-- **On Windows**: Download the appropriate `.whl` file from [here](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio)
-- **On macOS**: Run `brew install portaudio` then `pip install pyaudio`
-- **On Linux**: Run `sudo apt-get install portaudio19-dev` then `pip install pyaudio`
 
 ### Runtime Issues
 
