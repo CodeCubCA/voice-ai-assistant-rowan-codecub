@@ -280,21 +280,20 @@ with status_col2:
     else:
         st.success("✅ Ready - Click microphone to speak")
 
-# Chat input area with voice and text options
-col1, col2 = st.columns([5, 1])
+# Chat input area - text input (must be outside columns for Streamlit compatibility)
+text_prompt = st.chat_input("Type your message or use the microphone...")
 
-with col2:
-    audio_bytes = audio_recorder(
-        text="",
-        recording_color="#e74c3c",
-        neutral_color="#667eea",
-        icon_name="microphone",
-        icon_size="2x",
-        key="audio_recorder"
-    )
-
-with col1:
-    text_prompt = st.chat_input("Type your message or use the microphone...")
+# Voice input option
+st.markdown("---")
+st.markdown("**Or use voice input:**")
+audio_bytes = audio_recorder(
+    text="",
+    recording_color="#e74c3c",
+    neutral_color="#667eea",
+    icon_name="microphone",
+    icon_size="2x",
+    key="audio_recorder"
+)
 
 # Process audio input
 prompt = None
