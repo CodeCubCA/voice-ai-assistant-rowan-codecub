@@ -1,5 +1,5 @@
 import streamlit as st
-import google.generativeai as genai
+from huggingface_hub import InferenceClient
 import os
 from dotenv import load_dotenv
 from audio_recorder_streamlit import audio_recorder
@@ -10,8 +10,14 @@ from gtts import gTTS
 # Load environment variables
 load_dotenv()
 
-# Configure Gemini API
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+# Get HuggingFace API token
+HUGGINGFACE_TOKEN = os.getenv("HUGGINGFACE_TOKEN")
+
+# Initialize HuggingFace Inference Client
+client = InferenceClient(token=HUGGINGFACE_TOKEN)
+
+# Model selection for HuggingFace
+MODEL_NAME = "meta-llama/Llama-3.2-3B-Instruct"
 
 # Personality system prompts
 PERSONALITIES = {
@@ -152,8 +158,9 @@ with st.sidebar:
 
     # About section in expander
     with st.expander("ℹ️ About", expanded=False):
-        st.write("AI-powered chatbot using Google Gemini API with voice input/output capabilities.")
+        st.write("AI-powered chatbot using HuggingFace API with voice input/output capabilities.")
         st.write("**Features:** Voice chat, TTS audio, multiple personalities, and multi-language support.")
+        st.write(f"**Model:** {MODEL_NAME}")
 
     st.markdown("---")
 
@@ -415,33 +422,33 @@ if prompt and not st.session_state.processing:
         message_placeholder = st.empty()
 
         try:
-            # Initialize the model
-            model = genai.GenerativeModel('gemini-2.0-flash')
-
-            # Create conversation history with personality context
-            conversation_history = [
-                {"role": "user", "parts": [PERSONALITIES[st.session_state.personality]]},
-                {"role": "model", "parts": ["Understood! I'll respond according to this personality."]}
+            # Build conversation history with personality context
+            messages = [
+                {"role": "system", "content": PERSONALITIES[st.session_state.personality]}
             ]
 
             # Add chat history
             for msg in st.session_state.messages[:-1]:  # Exclude the current message
-                if msg["role"] == "user":
-                    conversation_history.append({"role": "user", "parts": [msg["content"]]})
-                else:
-                    conversation_history.append({"role": "model", "parts": [msg["content"]]})
+                messages.append({"role": msg["role"], "content": msg["content"]})
 
-            # Start chat with history
-            chat = model.start_chat(history=conversation_history)
+            # Add current user message
+            messages.append({"role": "user", "content": prompt})
 
-            # Send message and stream response
-            response = chat.send_message(prompt, stream=True)
+            # Call HuggingFace API with streaming
+            response = client.chat_completion(
+                messages=messages,
+                model=MODEL_NAME,
+                max_tokens=500,
+                stream=True
+            )
 
             full_response = ""
             for chunk in response:
-                if chunk.text:
-                    full_response += chunk.text
-                    message_placeholder.markdown(full_response + "▌")
+                if hasattr(chunk, 'choices') and len(chunk.choices) > 0:
+                    if hasattr(chunk.choices[0], 'delta') and hasattr(chunk.choices[0].delta, 'content'):
+                        if chunk.choices[0].delta.content:
+                            full_response += chunk.choices[0].delta.content
+                            message_placeholder.markdown(full_response + "▌")
 
             message_placeholder.markdown(full_response)
 
@@ -458,11 +465,13 @@ if prompt and not st.session_state.processing:
             st.rerun()
 
         except Exception as e:
-            error_message = f"Error: {str(e)}"
+            import traceback
+            error_details = traceback.format_exc()
+            error_message = f"Error: {str(e)}\n\n```\n{error_details}\n```\n\nPlease make sure your HUGGINGFACE_TOKEN is set correctly in the .env file."
             message_placeholder.error(error_message)
             st.session_state.messages.append({"role": "assistant", "content": error_message})
             st.session_state.processing = False
 
 # Footer
 st.markdown("---")
-st.caption("Powered by Google Gemini API")
+st.caption("Powered by HuggingFace API")
