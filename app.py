@@ -434,21 +434,20 @@ if prompt and not st.session_state.processing:
             # Add current user message
             messages.append({"role": "user", "content": prompt})
 
-            # Call HuggingFace API with streaming
-            response = client.chat_completion(
-                messages=messages,
-                model=MODEL_NAME,
-                max_tokens=500,
-                stream=True
-            )
+            # Call HuggingFace API
+            with st.spinner("🤔 Thinking..."):
+                response = client.chat_completion(
+                    messages=messages,
+                    model=MODEL_NAME,
+                    max_tokens=500,
+                    stream=False
+                )
 
-            full_response = ""
-            for chunk in response:
-                if hasattr(chunk, 'choices') and len(chunk.choices) > 0:
-                    if hasattr(chunk.choices[0], 'delta') and hasattr(chunk.choices[0].delta, 'content'):
-                        if chunk.choices[0].delta.content:
-                            full_response += chunk.choices[0].delta.content
-                            message_placeholder.markdown(full_response + "▌")
+                # Extract the response content
+                if hasattr(response, 'choices') and len(response.choices) > 0:
+                    full_response = response.choices[0].message.content
+                else:
+                    full_response = "Sorry, I couldn't generate a response."
 
             message_placeholder.markdown(full_response)
 
